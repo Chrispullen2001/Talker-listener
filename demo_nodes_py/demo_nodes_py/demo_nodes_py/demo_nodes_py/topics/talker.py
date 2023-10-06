@@ -13,44 +13,32 @@
 # limitations under the License.
 
 import rclpy
-from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
-
 from std_msgs.msg import String
-import inflect  # Import the 'inflect' library
+import inflect
 
-
-class Talker(Node):
-
+class TalkerNode(Node):
     def __init__(self):
-        super().__init__('Pullen_talker')  # Replace 'your_last_name' with your actual last name
-        self.i = 0
-        self.pub = self.create_publisher(String, 'chatter', 10)
-        timer_period = 1.0
-        self.tmr = self.create_timer(timer_period, self.timer_callback)
-        self.p = inflect.engine()  # Create an instance of the inflect engine
-    
+        super().__init__('talker')
+        self.publisher = self.create_publisher(String, 'chatter', 10)
+        timer_period = 2  # seconds
+        self.timer = self.create_timer(timer_period, self.timer_callback)
+        self.p = inflect.engine()
+        self.counter = 1
+
     def timer_callback(self):
         msg = String()
-        msg.data = 'Hello World: {0}'.format(self.p.number_to_words(self.i))  # Convert number to words
-        self.i += 1
-        self.get_logger().info('Publishing: "{0}"'.format(msg.data))
-        self.pub.publish(msg)
-
+        numeric_word = self.p.number_to_words(self.counter)
+        msg.data = f'Hello World: {numeric_word.capitalize()}'
+        self.publisher.publish(msg)
+        self.counter += 1
 
 def main(args=None):
     rclpy.init(args=args)
-
-    node = Talker()
-
-    try:
-        rclpy.spin(node)
-    except (KeyboardInterrupt, ExternalShutdownException):
-        pass
-    finally:
-        node.destroy_node()
-        rclpy.try_shutdown()
-
+    talker = TalkerNode()
+    rclpy.spin(talker)
+    talker.destroy_node()
+    rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
