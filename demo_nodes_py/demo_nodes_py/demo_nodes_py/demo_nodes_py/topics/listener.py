@@ -13,35 +13,44 @@
 # limitations under the License.
 
 import rclpy
-from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
-
 from std_msgs.msg import String
 
-
-class Listener(Node):
-
+class ListenerNode(Node):
     def __init__(self):
-        super().__init__('Pullen_listener')  # Replace 'your_last_name' with your actual last name
-        self.sub = self.create_subscription(String, 'chatter', self.chatter_callback, 10)
-        self.my_first_name = "Christopher"  # Replace with your first name
-        
-    def chatter_callback(self, msg):
-        self.get_logger().info(f'Christopher heard: {self.my_first_name} -> [{msg.data}]')
+        super().__init__('listener')
+        self.subscription = self.create_subscription(
+            String,
+            'chatter',
+            self.listener_callback,
+            10
+        )
+        self.subscription
 
+    def listener_callback(self, msg):
+        # Split the message into words
+        words = msg.data.split()
+
+        # Process and rebuild the message
+        new_message_parts = []
+        for word in words:
+            if word.isdigit():
+                # Convert numeric words to numeric symbols
+                new_word = str(int(word))
+            else:
+                new_word = word
+            new_message_parts.append(new_word)
+
+        # Reconstruct and display the modified message
+        modified_message = ' '.join(new_message_parts)
+        self.get_logger().info(f'Chris heard: [ECE3432 -> {modified_message}]')
 
 def main(args=None):
     rclpy.init(args=args)
-
-    node = Listener()
-    try:
-        rclpy.spin(node)
-    except (KeyboardInterrupt, ExternalShutdownException):
-        pass
-    finally:
-        node.destroy_node()
-        rclpy.try_shutdown()
-
+    listener = ListenerNode()
+    rclpy.spin(listener)
+    listener.destroy_node()
+    rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
